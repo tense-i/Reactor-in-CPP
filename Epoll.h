@@ -6,7 +6,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <vector>
-
+#include "Channel.h"
+class Channel;
 class Epoll
 {
 private:
@@ -17,6 +18,7 @@ private:
 public:
     Epoll();
     ~Epoll();
+    void updateChannel(Channel *ch); /*添加、或者更新channel到红黑树*/
     void addFd(int fd, uint32_t events);
-    std::vector<epoll_event> loop(int timeout = -1);
+    std::vector<Channel *> loop(int timeout = -1);
 };

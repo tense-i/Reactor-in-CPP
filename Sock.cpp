@@ -38,18 +38,18 @@ void Sock::setRuseaddr(bool on)
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &opt, static_cast<socklen_t>(sizeof(opt)));
 }
 
-void Sock::setTCPnodelay(bool on = 0)
+void Sock::setTCPnodelay(bool on)
 {
     int opt = on ? 1 : 0;
     setsockopt(fd_, SOL_SOCKET, TCP_NODELAY, &opt, static_cast<socklen_t>(sizeof(opt)));
 }
 
-void Sock::setKeepAlive(bool on = 0)
+void Sock::setKeepAlive(bool on)
 {
     int opt = on ? 1 : 0;
     setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE, &opt, static_cast<socklen_t>(sizeof(opt)));
 }
-void Sock::setReusePort(bool on = 0)
+void Sock::setReusePort(bool on)
 {
     int opt = on ? 1 : 0;
     setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT, &opt, static_cast<socklen_t>(sizeof(opt)));
@@ -64,7 +64,7 @@ void Sock::bind(const InetAddress &addr)
     }
 }
 
-void Sock::listen(int queSize = 128)
+void Sock::listen(int queSize)
 {
     if (::listen(fd_, queSize) < 0)
     {

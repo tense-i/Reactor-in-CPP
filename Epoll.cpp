@@ -1,18 +1,32 @@
 #include "Epoll.h"
 
-/* class Epoll
+void Epoll::updateChannel(Channel *ch) /*添加、或者更新channel到红黑树*/
 {
-private:
-    int epfd = -1;
-    static const int MaxEvents = 11000;
-    epoll_event events[MaxEvents];
-
-public:
-    Epoll();
-    ~Epoll();
-    void addFd(int fd, uint32_t op);
-    std::vector<epoll_event> loop(int timeout = -1);
-}; */
+    epoll_event ev;
+    ev.events = ch->events();
+    ev.data.ptr = ch;
+    // 判断该节点是否已经在epoll树上
+    if (ch->inepoll())
+    {
+        if (epoll_ctl(epfd, (EPOLL_CTL_MOD), ch->fd(), &ev) == -1)
+        {
+            printf("%s:%s:%d epoll ctl modify erro \n", __FILE__, __FUNCTION__, __LINE__);
+            exit(-1);
+        }
+    }
+    else
+    {
+        if (epoll_ctl(epfd, (EPOLL_CTL_ADD), ch->fd(), &ev) == -1)
+        {
+            printf("%s:%s:%d epoll ctl add erro\n", __FILE__, __FUNCTION__, __LINE__);
+            exit(-1);
+        }
+        else
+        {
+            ch->setInepoll();
+        }
+    }
+}
 
 Epoll::Epoll()
 {
@@ -40,9 +54,10 @@ void Epoll::addFd(int fd, uint32_t events)
         exit(-1);
     }
 }
-std::vector<epoll_event> Epoll::loop(int timeout = -1)
+
+std::vector<Channel *> Epoll::loop(int timeout)
 {
-    std::vector<epoll_event> evsQue;
+    std::vector<Channel *> Channels;
     bzero(evs, sizeof(evs));
 
     int nready = epoll_wait(epfd, evs, MaxEvents, -1);
@@ -55,11 +70,13 @@ std::vector<epoll_event> Epoll::loop(int timeout = -1)
     if (nready == 0)
     {
         printf("%s:%s:%d epoll_waite\n", __FILE__, __FUNCTION__, __LINE__);
-        return evsQue;
+        return Channels;
     }
     for (int i = 0; i < nready; i++)
     {
-        evsQue.push_back(evs[i]);
+        Channel *ch = (Channel *)evs[i].data.ptr;
+        ch->setRevents(evs[i].events);
+        Channels.push_back(ch);
     }
-    return evsQue;
+    return Channels;
 }

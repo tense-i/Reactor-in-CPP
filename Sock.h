@@ -20,8 +20,6 @@ public:
     ~Sock();
     int fd() const;
     void setRuseaddr(bool on);
-    void setRuseaddr(bool on);
-
     void setTCPnodelay(bool on = 0);
     void setKeepAlive(bool on = 0);
     void setReusePort(bool on = 0);

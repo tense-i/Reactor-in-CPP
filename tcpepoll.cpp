@@ -27,24 +27,26 @@ int main(int argc, char **argv)
     servSocket.listen();
     Epoll epoll;
 
-    epoll.addFd(servSocket.fd(), EPOLLIN | EPOLLET);
-    std::vector<epoll_event> epQue;
+    Channel *servChannel = new Channel(&epoll, servSocket.fd());
+    // 监听读事件
+    servChannel->enableReading();
+    std::vector<Channel *> Channels;
 
     while (true)
     {
-        epQue = epoll.loop();
+        Channels = epoll.loop();
 
-        for (epoll_event &ev : epQue)
+        for (auto &ch : Channels)
         {
-            if (ev.events & EPOLLRDHUP) // 对端关闭
+            if (ch->events() & EPOLLRDHUP) // 对端关闭
             {
-                printf("client %d :closed ...\n", ev.data.fd);
-                close(ev.data.fd);
+                printf("client %d :closed ...\n", ch->fd());
+                close(ch->fd());
             } // 普通读事件或者外带数据
-            else if (ev.events & (EPOLLIN | EPOLLHUP))
+            else if (ch->events() & (EPOLLIN | EPOLLHUP))
             {
                 // 监听套接字发生读事件--客户端发起请求
-                if (ev.data.fd == servSocket.fd())
+                if (ch->fd() == servSocket.fd())
                 {
                     InetAddress clieAddr;
 
@@ -52,16 +54,19 @@ int main(int argc, char **argv)
                     Sock *clieSock = new Sock(servSocket.accept(clieAddr));
 
                     printf("new client %s:%d connct...\n", clieAddr.ip(), clieAddr.port());
-                    epoll.addFd(clieSock->fd(), EPOLLIN | EPOLLET);
+
+                    Channel *clieChannel = new Channel(&epoll, clieSock->fd());
+                    clieChannel->useET();
+                    clieChannel->enableReading();
                 }
                 else // 客户端的fd触发可读事件
                 {
                     char buf[1024] = "";
-                    ssize_t readn = read(ev.data.fd, buf, sizeof(buf));
+                    ssize_t readn = read(ch->fd(), buf, sizeof(buf));
                     if (readn > 0)
                     {
-                        printf("recv(eventfd=%d)%s\n", ev.data.fd, buf);
-                        send(ev.data.fd, buf, strlen(buf), 0);
+                        printf("recv(eventfd=%d)%s\n", ch->fd(), buf);
+                        send(ch->fd(), buf, strlen(buf), 0);
                     } // 读取数据时被信号中断、继续读取
                     else if (readn == -1 && errno == EINTR)
                     {
@@ -69,20 +74,20 @@ int main(int argc, char **argv)
                     }
                     else if (readn == 0) // 客户端连接断开
                     {
-                        printf("client event=%d disconnected \n", ev.data.fd);
-                        close(ev.data.fd);
+                        printf("client event=%d disconnected \n", ch->fd());
+                        close(ch->fd());
                         break;
                     }
                 }
             }
-            else if (ev.events & EPOLLOUT)
+            else if (ch->fd() & EPOLLOUT)
             {
                 ; // redo
             }
             else
             {
-                printf("client envent=%d error\n", ev.data.fd);
-                close(ev.data.fd);
+                printf("client envent=%d error\n", ch->fd());
+                close(ch->fd());
             }
         }
     }
