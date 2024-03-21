@@ -14,4 +14,5 @@ public:
     TcpServer(const std::string &ip, const uint16_t port);
     ~TcpServer();
     void start();
+    void newConnect(Sock *clieSock);
 };

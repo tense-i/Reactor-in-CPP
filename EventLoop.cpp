@@ -9,7 +9,8 @@ EventLoop::~EventLoop()
     delete ep_;
 }
 
-Epoll *EventLoop::ep()
+Epoll *
+EventLoop::ep()
 {
     return ep_;
 }

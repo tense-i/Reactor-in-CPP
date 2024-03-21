@@ -10,8 +10,11 @@ private:
     EventLoop *loop_; // Acceptor对应的事件循环、构造函数中传入
     Sock *servSocket_;
     Channel *acceptChannel_;
+    std::function<void(Sock *)> newConnectCallBack_;
 
 public:
     Acceptor(EventLoop *loop, const std::string &ip, const uint16_t port);
     ~Acceptor();
+    void newConnect();
+    void setNewConnectCallBack(std::function<void(Sock *)> fn);
 };

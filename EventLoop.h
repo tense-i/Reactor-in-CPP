@@ -1,6 +1,7 @@
 #pragma once
-
 #include "Epoll.h"
+
+class Epoll;
 
 class EventLoop
 {

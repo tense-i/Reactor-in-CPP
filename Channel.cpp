@@ -2,14 +2,16 @@
 #include "inetaddress.h"
 #include "Sock.h"
 #include <sys/epoll.h>
-
-Channel::Channel(Epoll *ep, int fd) : ep_(ep), fd_(fd)
+#include "EventLoop.h"
+#include "Epoll.h"
+#include "Connection.h"
+Channel::Channel(EventLoop *loop, int fd) : loop_(loop), fd_(fd)
 {
 }
 
 Channel::~Channel()
 {
-    // 不能释放channel类的fd与ev、channel只是使用它们
+    // 不要销毁loop_,也不能关闭fd_因为这两个东西不属于Channel类、channel只管辖它们
 }
 
 int Channel::fd()
@@ -28,7 +30,7 @@ void Channel::useET()
 void Channel::enableReading()
 {
     events_ = events_ | EPOLLIN;
-    ep_->updateChannel(this);
+    loop_->ep()->updateChannel(this);
 }
 
 /*设置inepoll的值*/
@@ -83,21 +85,6 @@ int Channel::handlerEvent()
     return 0;
 }
 
-void Channel::newConnect(Sock *servSock)
-{
-    InetAddress clieAddr;
-
-    // 客户端的clieSock不能再栈上创建、在退栈后会自动退出、调用析构、释放fd
-    Sock *clieSock = new Sock(servSock->accept(clieAddr));
-
-    printf("new client %s:%d connct...\n", clieAddr.ip(), clieAddr.port());
-
-    Channel *clieChannel = new Channel(ep_, clieSock->fd());
-    clieChannel->useET();
-    clieChannel->enableReading();
-    clieChannel->setReadCallBack(std::bind(&Channel::onMessageArvc, clieChannel));
-}
-
 void Channel::onMessageArvc()
 {
     char buf[1024];
@@ -130,8 +117,4 @@ void Channel::onMessageArvc()
 void Channel::setReadCallBack(std::function<void()> fn)
 {
     readCallBack_ = fn;
-}
-
-void Channel::readCallBack()
-{
 }
