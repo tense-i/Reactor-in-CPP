@@ -55,6 +55,16 @@ void Sock::setReusePort(bool on)
     setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT, &opt, static_cast<socklen_t>(sizeof(opt)));
 }
 
+std::string Sock::ip()
+{
+    return ip_;
+}
+
+uint16_t Sock::port()
+{
+    return port_;
+}
+
 void Sock::bind(const InetAddress &addr)
 {
     if (::bind(fd_, addr.addr(), sizeof(sockaddr)) < 0)
@@ -62,6 +72,8 @@ void Sock::bind(const InetAddress &addr)
         printf("%s:%s:%d bind socket  error:%d \n", __FILE__, __FUNCTION__, __LINE__, errno);
         exit(-1);
     }
+    ip_ = addr.ip();
+    port_ = addr.port();
 }
 
 void Sock::listen(int queSize)
@@ -79,16 +91,19 @@ int Sock::accept(InetAddress &addr)
     int cliefd = accept4(fd_, (sockaddr *)&peerAddr, &len, SOCK_NONBLOCK);
 
     addr.setAddr(peerAddr);
+    ip_ = addr.ip();
+    port_ = addr.port();
     return cliefd;
 }
 
 int createNonblockSock()
 {
-    int listenfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
-    if (listenfd < 0)
+    /**创建一个非阻塞的套接字*/
+    int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
+    if (fd < 0)
     {
         printf("%s:%s:%d listen socket create  error:%d \n", __FILE__, __FUNCTION__, __LINE__, errno);
         exit(-1);
     }
-    return listenfd;
+    return fd;
 }

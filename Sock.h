@@ -13,6 +13,8 @@ class Sock
 {
 private:
     const int fd_;
+    std::string ip_;
+    uint16_t port_;
 
 public:
     Sock();
@@ -23,6 +25,8 @@ public:
     void setTCPnodelay(bool on = 0);
     void setKeepAlive(bool on = 0);
     void setReusePort(bool on = 0);
+    std::string ip();
+    uint16_t port();
 
     void bind(const InetAddress &addr);
     void listen(int queSize = 128);

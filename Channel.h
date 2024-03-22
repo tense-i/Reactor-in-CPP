@@ -16,6 +16,8 @@ private:
     uint32_t revents_ = 0;      // 已经触发的事件
 
     std::function<void()> readCallBack_;
+    std::function<void()> closedCallBack_;
+    std::function<void()> errorCallBack_;
 
 public:
     Channel(EventLoop *loop, int fd);
@@ -31,4 +33,6 @@ public:
     int handlerEvent();              /*事件处理函数*/
     void onMessageArvc();
     void setReadCallBack(std::function<void()> fn);
+    void setClosedCallBack(std::function<void()> fn);
+    void setErrorCallBack(std::function<void()> fn);
 };

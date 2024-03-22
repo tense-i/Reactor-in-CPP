@@ -11,7 +11,7 @@ Channel::Channel(EventLoop *loop, int fd) : loop_(loop), fd_(fd)
 
 Channel::~Channel()
 {
-    // 不要销毁loop_,也不能关闭fd_因为这两个东西不属于Channel类、channel只管辖它们
+    // 不要销毁loop_,也不能关闭fd_因为这两个东西不属于Channel类、channel只管辖它们o
 }
 
 int Channel::fd()
@@ -66,8 +66,7 @@ int Channel::handlerEvent()
 {
     if (this->events_ & EPOLLRDHUP) // 对端关闭
     {
-        printf("client %d :closed ...\n", fd_);
-        close(fd_);
+        closedCallBack_();
     } // 普通读事件或者外带数据
     else if (events_ & (EPOLLIN | EPOLLHUP))
     {
@@ -79,8 +78,7 @@ int Channel::handlerEvent()
     }
     else
     {
-        printf("client envent=%d error\n", fd_);
-        close(fd_);
+        errorCallBack_();
     }
     return 0;
 }
@@ -107,9 +105,7 @@ void Channel::onMessageArvc()
         }
         else if (nread == 0)
         {
-            printf("client(eventfddd =%d ) disconnected\n", fd_);
-            close(fd_);
-            break;
+            closedCallBack_();
         }
     }
 }
@@ -117,4 +113,14 @@ void Channel::onMessageArvc()
 void Channel::setReadCallBack(std::function<void()> fn)
 {
     readCallBack_ = fn;
+}
+
+void Channel::setClosedCallBack(std::function<void()> fn)
+{
+    closedCallBack_ = fn;
+}
+
+void Channel::setErrorCallBack(std::function<void()> fn)
+{
+    errorCallBack_ = fn;
 }
