@@ -20,4 +20,7 @@ public:
     void newConnect(Sock *clieSock);
     void closeClientConnect(Connection *clieConnect);          /*关闭客户端的连接、在Connection中回调它*/
     void onError_closedClientConnect(Connection *clieConnect); /*当发生错误时、释放connection*/
+    void onMessage(Connection *conn, std::string message);     /* 处理客户端的请求报文、在COnnection类中回调此函数 */
+    void sendComplete(Connection *conn);                       /*数据发送完成后、在connection类中回调此函数*/
+    void epollTimeout(EventLoop *loop);
 };

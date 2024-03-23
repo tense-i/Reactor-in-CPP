@@ -55,21 +55,26 @@ void Epoll::addFd(int fd, uint32_t events)
     }
 }
 
-std::vector<Channel *> Epoll::loop(int timeout)
+std::vector<Channel *> Epoll::loop(int timeout = -1)
 {
     std::vector<Channel *> Channels;
     bzero(evs, sizeof(evs));
 
-    int nready = epoll_wait(epfd, evs, MaxEvents, -1);
+    int nready = epoll_wait(epfd, evs, MaxEvents, timeout);
     if (nready < 0)
     {
+        // EBADF: epfd不是一个有效描述符
+        // EFAULT:参数events指向的内存区、不可写
+        // EINVAL:epfd不是一个epoll文件描述符、或者参数maxevents小于等于0
+        // EINTR: 阻塞过程中被信号中断、epoll_wait可以避免、解析error后重新调用epool_wait
+        // 在reactor模型中、不建议使用信号、因为信号的处理很麻烦、没有必要--陈硕
         printf("%s:%s:%d epoll_waite\n", __FILE__, __FUNCTION__, __LINE__);
         exit(-1);
     }
 
-    if (nready == 0)
+    if (nready == 0) // 超时
     {
-        printf("%s:%s:%d epoll_waite\n", __FILE__, __FUNCTION__, __LINE__);
+        // printf("%s:%s:%d epoll_waite\n", __FILE__, __FUNCTION__, __LINE__);
         return Channels;
     }
     for (int i = 0; i < nready; i++)

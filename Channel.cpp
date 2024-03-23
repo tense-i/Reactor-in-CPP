@@ -33,6 +33,24 @@ void Channel::enableReading()
     loop_->ep()->updateChannel(this);
 }
 
+void Channel::disableReading()
+{
+    events_ &= (~EPOLLIN);
+    loop_->ep()->updateChannel(this);
+}
+
+void Channel::enableWrite()
+{
+    events_ |= EPOLLOUT;
+    loop_->ep()->updateChannel(this);
+}
+
+void Channel::disableWrite()
+{
+    events_ &= (~EPOLLOUT);
+    loop_->ep()->updateChannel(this);
+}
+
 /*设置inepoll的值*/
 void Channel::setInepoll()
 {
@@ -72,42 +90,15 @@ int Channel::handlerEvent()
     {
         readCallBack_();
     }
-    else if (fd_ & EPOLLOUT)
+    else if (fd_ & EPOLLOUT) // 普通写事件
     {
-        ; // redo
+        writeCallBack_();
     }
     else
     {
         errorCallBack_();
     }
     return 0;
-}
-
-void Channel::onMessageArvc()
-{
-    char buf[1024];
-    while (true)
-    {
-        bzero(&buf, sizeof(buf));
-        ssize_t nread = read(fd_, buf, sizeof(buf));
-        if (nread > 0)
-        {
-            printf("recv(event=%d):%s\n", fd_, buf);
-            send(fd_, buf, strlen(buf), 0);
-        } // 读取数据时被中断、继续读取
-        else if (nread == -1 && errno == EINTR)
-        {
-            continue;
-        } // 全部数据已经读取完毕
-        else if (nread == -1 && ((errno == EAGAIN)) || (errno == EWOULDBLOCK))
-        {
-            break;
-        }
-        else if (nread == 0)
-        {
-            closedCallBack_();
-        }
-    }
 }
 
 void Channel::setReadCallBack(std::function<void()> fn)
@@ -123,4 +114,9 @@ void Channel::setClosedCallBack(std::function<void()> fn)
 void Channel::setErrorCallBack(std::function<void()> fn)
 {
     errorCallBack_ = fn;
+}
+
+void Channel::setWriteCallBack(std::function<void()> fn)
+{
+    writeCallBack_ = fn;
 }

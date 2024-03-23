@@ -18,6 +18,7 @@ private:
     std::function<void()> readCallBack_;
     std::function<void()> closedCallBack_;
     std::function<void()> errorCallBack_;
+    std::function<void()> writeCallBack_;
 
 public:
     Channel(EventLoop *loop, int fd);
@@ -25,6 +26,9 @@ public:
     int fd();
     void useET();                    /*设为边缘触发*/
     void enableReading();            /*监视读事件*/
+    void disableReading();           /*取消读事件*/
+    void enableWrite();              /*监视写事件*/
+    void disableWrite();             /*取消写事件*/
     void setInepoll();               /*设置inepoll的值*/
     void setRevents(uint32_t event); /*设置发生的事件*/
     bool inepoll();                  /*返回inepoll的值*/
@@ -35,4 +39,5 @@ public:
     void setReadCallBack(std::function<void()> fn);
     void setClosedCallBack(std::function<void()> fn);
     void setErrorCallBack(std::function<void()> fn);
+    void setWriteCallBack(std::function<void()> fn);
 };

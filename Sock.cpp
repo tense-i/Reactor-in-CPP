@@ -65,6 +65,12 @@ uint16_t Sock::port()
     return port_;
 }
 
+void Sock::setAddr(const std::string &ip, uint16_t port)
+{
+    ip_ = ip;
+    port_ = port;
+}
+
 void Sock::bind(const InetAddress &addr)
 {
     if (::bind(fd_, addr.addr(), sizeof(sockaddr)) < 0)

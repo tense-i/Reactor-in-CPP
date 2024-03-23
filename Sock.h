@@ -27,7 +27,7 @@ public:
     void setReusePort(bool on = 0);
     std::string ip();
     uint16_t port();
-
+    void setAddr(const std::string &ip, uint16_t port);
     void bind(const InetAddress &addr);
     void listen(int queSize = 128);
     int accept(InetAddress &addr);

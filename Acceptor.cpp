@@ -33,7 +33,7 @@ void Acceptor::newConnect()
     InetAddress clieAddr;
     Sock *clienSock = new Sock(servSocket_->accept(clieAddr));
     // 客户端的clieSock不能再栈上创建、在退栈后会自动退出、调用析构、释放fd
-
+    clienSock->setAddr(clieAddr.ip(), clieAddr.port());
     newConnectCallBack_(clienSock);
 }
 

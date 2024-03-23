@@ -30,7 +30,34 @@ int main(int argc, char **argv)
 
     printf("connect ok \n");
 
-    while (true)
+    for (int i = 0; i < 100; i++)
+    {
+        memset(buf, 0, sizeof(buf));
+        snprintf(buf, sizeof(buf), "这是第%d个超级女生", i);
+        char tmpBuf[1024];
+        memset(tmpBuf, 0, sizeof(tmpBuf));
+        int len = strlen(buf);   // 计算报文的大小
+        memcpy(tmpBuf, &len, 4); // 拼接报文头部、将报文的长度拼接到tmpbuf中
+        // tmpbuf="24"+"只是第1个超级女生"
+        memcpy(tmpBuf + 4, buf, len); // 拼接报文内容
+        send(sockfd, tmpBuf, len + 4, 0);
+    }
+
+    for (int i = 0; i < 100; i++)
+    {
+        int len;
+        recv(sockfd, &len, 4, 0);
+
+        memset(buf, 0, sizeof(buf));
+        if (recv(sockfd, buf, len, 0) <= 0)
+        {
+            printf("read failed\n");
+            close(sockfd);
+            return -1;
+        }
+        printf("recv:%s\n", buf); // 接到的数据是带着报文头的
+    }
+    /* while (true)
     {
         memset(buf, 0, sizeof(buf));
         printf("please input: ");
@@ -41,7 +68,7 @@ int main(int argc, char **argv)
 
             printf("write failed\n");
             return -1;
-                }
+        }
         memset(buf, 0, sizeof(buf));
         if (recv(sockfd, buf, sizeof(buf), 0) <= 0)
         {
@@ -50,6 +77,5 @@ int main(int argc, char **argv)
             return -1;
         }
         printf("recv:%s\n", buf);
-        /* code */
-    }
+    } */
 }
