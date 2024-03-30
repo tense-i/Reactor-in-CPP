@@ -1,6 +1,6 @@
 #pragma once
-#include "Sock.h"
-#include "inetaddress.h"
+#include "Socket.h"
+#include "InetAddress.h"
 #include "Channel.h"
 #include "EventLoop.h"
 #include "Buffer.h"
@@ -8,30 +8,29 @@
 class Connection
 {
 private:
-    EventLoop *loop_; // Acceptor对应的事件循环、构造函数中传入
-    Sock *clieSocket_;
-    Channel *clienChannel_;
-    Buffer inputBuf;
-    Buffer outputBuf;
-
-    std::function<void(Connection *)> closeCallBack_; /*关闭fd_的回调函数、将回调Tcpserver::closedconnecion*/
+    EventLoop *evloop_; // Acceptor对应的事件循环、构造函数中传入
+    Socket *clieSocket_;
+    Channel *clieChannel_;
+    Buffer inputBuf_; // 接收缓冲区
+    Buffer outputBuf_;
+    std::function<void(Connection *)> closedCallBack_; // 关闭fd_的回调函数、将回调Tcpserver::closedconnecion
     std::function<void(Connection *)> errorCallBack_;
-    std::function<void(Connection *, std::string)> onMessageCallBack_;
+    std::function<void(Connection *, std::string &)> onMessageCallBack_; // 处理报文的回调函数、将回调TcpServer::onmessage();
     std::function<void(Connection *)> sendCompleteCallBack_;
 
 public:
-    Connection(EventLoop *loop, Sock *clienSock);
+    Connection(EventLoop *loop, Socket *clienSock);
     ~Connection();
     int fd() const;
     std::string ip() const;
     uint16_t port() const;
+    void writeCallBack(); // 处理写事件、被channel回调
+    void onMessage();     /*接受报文*/
+    void send(const char *data, size_t size);
     void errorCallBack();
     void closedCallBack();
-    void onMessageArrive();
     void setClosedCallBack(std::function<void(Connection *)> fn);
     void setErrorCallBack(std::function<void(Connection *)> fn);
-    void setMessageCallBack(std::function<void(Connection *, std::string)> fn);
-    void send(const char *data, size_t size);
-    void writeCallBack();
+    void setOnMessageCallBack(std::function<void(Connection *, std::string &)> fn);
     void setSendCompleteCallBack(std::function<void(Connection *)> fn);
 };

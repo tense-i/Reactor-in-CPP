@@ -15,19 +15,16 @@ EventLoop::ep()
     return ep_;
 }
 
-void EventLoop::setEpollTimeoutCallBack(std::function<void(EventLoop *)> fn)
-{
-    epollTimeoutCallBack_ = fn;
-}
-
+/**
+ * 运行事件循环、并处理已发生事件
+ */
 void EventLoop::run()
 {
     std::vector<Channel *> Channels;
 
     while (true)
     {
-        Channels = ep_->loop();
-        // 如果channels为空、则表示超时、回调TCPServer::epolltimeout();
+        Channels = ep_->loop(-1);
         if (Channels.size() == 0)
         {
             epollTimeoutCallBack_(this);
@@ -36,8 +33,13 @@ void EventLoop::run()
         {
             for (auto &ch : Channels)
             {
-                ch->handlerEvent();
+                ch->eventHandler();
             }
         }
     }
+}
+
+void EventLoop::setEpollTimeoutCallBack(std::function<void(EventLoop *)> fn)
+{
+    epollTimeoutCallBack_ = fn;
 }

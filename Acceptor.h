@@ -1,20 +1,23 @@
 #pragma once
-#include "Sock.h"
-#include "inetaddress.h"
+#include "Socket.h"
 #include "Channel.h"
 #include "EventLoop.h"
+#include "InetAddress.h"
 
+/**
+ * @brief 提取器、为监听socket服务
+ */
 class Acceptor
 {
 private:
-    EventLoop *loop_; // Acceptor对应的事件循环、构造函数中传入
-    Sock *servSocket_;
+    EventLoop *evloop_; // Acceptor对应的事件循环、构造函数中传入
+    Socket *servSocket_;
     Channel *acceptChannel_;
-    std::function<void(Sock *)> newConnectCallBack_;
+    std::function<void(Socket *)> newConnectCallBack_;
 
 public:
-    Acceptor(EventLoop *loop, const std::string &ip, const uint16_t port);
+    Acceptor(EventLoop *evloop, const std::string &ip, const uint16_t port);
     ~Acceptor();
-    void newConnect();
-    void setNewConnectCallBack(std::function<void(Sock *)> fn);
+    void newConnection();
+    void setNewConnectCallBack(std::function<void(Socket *)> fn);
 };

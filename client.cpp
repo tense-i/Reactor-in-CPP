@@ -29,8 +29,7 @@ int main(int argc, char **argv)
     Connect(sockfd, (sockaddr *)&servAddr, sizeof(servAddr));
 
     printf("connect ok \n");
-
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
     {
         memset(buf, 0, sizeof(buf));
         snprintf(buf, sizeof(buf), "这是第%d个超级女生", i);
@@ -43,13 +42,15 @@ int main(int argc, char **argv)
         send(sockfd, tmpBuf, len + 4, 0);
     }
 
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
     {
         int len;
-        recv(sockfd, &len, 4, 0);
 
+        // 拆包
+        recv(sockfd, (void *)&len, 4, 0);
+        printf("client recv: len == %d \n", len);
         memset(buf, 0, sizeof(buf));
-        if (recv(sockfd, buf, len, 0) <= 0)
+        if (Read(sockfd, buf, len) <= 0)
         {
             printf("read failed\n");
             close(sockfd);
@@ -57,6 +58,7 @@ int main(int argc, char **argv)
         }
         printf("recv:%s\n", buf); // 接到的数据是带着报文头的
     }
+
     /* while (true)
     {
         memset(buf, 0, sizeof(buf));

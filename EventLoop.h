@@ -14,7 +14,7 @@ public:
     EventLoop();
     ~EventLoop();
     Epoll *ep();
-    void setEpollTimeoutCallBack(std::function<void(EventLoop *)> fn);
 
     void run();
+    void setEpollTimeoutCallBack(std::function<void(EventLoop *)> fn);
 };

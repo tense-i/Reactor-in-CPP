@@ -1,17 +1,14 @@
 #include "Channel.h"
-#include "inetaddress.h"
-#include "Sock.h"
-#include <sys/epoll.h>
-#include "EventLoop.h"
-#include "Epoll.h"
+#include "InetAddress.h"
 #include "Connection.h"
-Channel::Channel(EventLoop *loop, int fd) : loop_(loop), fd_(fd)
+
+Channel::Channel(EventLoop *evloop, int fd) : evloop_(evloop), fd_(fd)
 {
 }
 
 Channel::~Channel()
 {
-    // 不要销毁loop_,也不能关闭fd_因为这两个东西不属于Channel类、channel只管辖它们o
+    // 不能释放channel类的fd与ev、channel只是使用它们、而不属于channel
 }
 
 int Channel::fd()
@@ -30,25 +27,25 @@ void Channel::useET()
 void Channel::enableReading()
 {
     events_ = events_ | EPOLLIN;
-    loop_->ep()->updateChannel(this);
+    evloop_->ep()->upDateChannel(this);
 }
 
 void Channel::disableReading()
 {
     events_ &= (~EPOLLIN);
-    loop_->ep()->updateChannel(this);
+    evloop_->ep()->upDateChannel(this);
 }
 
 void Channel::enableWrite()
 {
-    events_ |= EPOLLOUT;
-    loop_->ep()->updateChannel(this);
+    events_ = (events_ | EPOLLOUT);
+    evloop_->ep()->upDateChannel(this);
 }
 
 void Channel::disableWrite()
 {
     events_ &= (~EPOLLOUT);
-    loop_->ep()->updateChannel(this);
+    evloop_->ep()->upDateChannel(this);
 }
 
 /*设置inepoll的值*/
@@ -60,7 +57,7 @@ void Channel::setInepoll()
 /*设置发生的事件*/
 void Channel::setRevents(uint32_t event)
 {
-    revents_ = revents_ | event;
+    revents_ = event;
 }
 
 /*返回inepoll的值*/
@@ -80,26 +77,58 @@ uint32_t Channel::revents()
     return revents_;
 }
 
-int Channel::handlerEvent()
+/*事件处理函数*/
+void Channel::eventHandler()
 {
-    if (this->events_ & EPOLLRDHUP) // 对端关闭
+
+    if (revents_ & EPOLLRDHUP) // 客户端关闭
     {
         closedCallBack_();
-    } // 普通读事件或者外带数据
-    else if (events_ & (EPOLLIN | EPOLLHUP))
+    }
+    else if (revents_ & (EPOLLIN | EPOLLPRI))
     {
+        printf("EPOLLIN\n");
         readCallBack_();
     }
-    else if (fd_ & EPOLLOUT) // 普通写事件
+    else if (revents_ & EPOLLOUT)
     {
+        printf("EPOLLOUT\n");
         writeCallBack_();
     }
     else
     {
+        printf("ERROR\n");
         errorCallBack_();
     }
-    return 0;
 }
+
+/* void Channel::onMessage()
+{
+    char buf[1024];
+    while (true)
+    {
+        memset(buf, 0, sizeof(buf));
+        int nread = read(fd_, buf, sizeof(buf));
+
+        if (nread > 0)
+        {
+            printf("server(event %d): %s\n", fd_, buf);
+            write(fd_, buf, nread);
+        } // 信号中断
+        else if (nread == -1 && (errno == EINTR))
+        {
+            continue;
+        } // 数据读取完毕
+        else if (nread == -1 && ((errno == EAGAIN) || (errno == EWOULDBLOCK)))
+        {
+            break;
+        }
+        else if (nread == 0) // 客户端半关闭
+        {
+            closedCallBack_();
+        }
+    }
+} */
 
 void Channel::setReadCallBack(std::function<void()> fn)
 {

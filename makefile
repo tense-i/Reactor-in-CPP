@@ -1,13 +1,11 @@
-all: client tcpepoll
+all: client server
 
 client: client.cpp
 	g++ -g -o client client.cpp
 
-tcpepoll: tcpepoll.cpp inetaddress.cpp Sock.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Acceptor.cpp Connection.cpp Buffer.cpp
-	g++ -g -o tcpepoll tcpepoll.cpp inetaddress.cpp Sock.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Acceptor.cpp Connection.cpp Buffer.cpp
-
+server: server.cpp InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Connection.cpp Acceptor.cpp Buffer.cpp EchoServer.cpp
+	g++ -g -o server server.cpp InetAddress.cpp Socket.cpp Epoll.cpp Channel.cpp EventLoop.cpp TcpServer.cpp Connection.cpp Acceptor.cpp Buffer.cpp EchoServer.cpp
 clean:
-	rm -f client tcpepoll
+	rm -f client server
 
 .PHONY: all clean
-
