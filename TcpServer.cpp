@@ -3,18 +3,29 @@
 #include <functional>
 #include <utility>
 
-TcpServer::TcpServer(const std::string &ip, const uint16_t port)
+TcpServer::TcpServer(const std::string &ip, uint16_t port, int threadNum) : threadNum_(threadNum)
 {
+    mainLoop_ = new EventLoop;
+    acceptor_ = new Acceptor(mainLoop_, ip, port);
+    threadpool_ = new ThreadPool(threadNum_, "IO"); // 创建线程池
+    // 创建从事件循环
 
-    acceptor_ = new Acceptor(&evloop_, ip, port);
+    for (int i = 0; i < threadNum_; i++)
+    {
+        subLoops_.push_back(new EventLoop); // 创建从事件循坏
+        subLoops_[i]->setEpollTimeoutCallBack(std::bind(&TcpServer::epollTimeout, this, std::placeholders::_1));
+        // 绑定run任务
+        threadpool_->addTask(std::bind(&EventLoop::run, subLoops_[i]));
+    }
     acceptor_->setNewConnectCallBack(std::bind(&TcpServer::newConnection, this, std::placeholders::_1));
-    evloop_.setEpollTimeoutCallBack(std::bind(&TcpServer::epollTimeout, this, std::placeholders::_1));
+
+    mainLoop_->setEpollTimeoutCallBack(std::bind(&TcpServer::epollTimeout, this, std::placeholders::_1));
 }
 
 TcpServer::~TcpServer()
 {
     delete acceptor_;
-
+    delete mainLoop_;
     // 释放所有的客户端connection
     // 有个问题当连接失败时、怎么释放对应的channel
     for (auto &conn : connects_)
@@ -25,7 +36,7 @@ TcpServer::~TcpServer()
 
 void TcpServer::start()
 {
-    evloop_.run();
+    mainLoop_->run();
 }
 
 void TcpServer::sendComplete(Connection *conn)
@@ -48,8 +59,11 @@ void TcpServer::epollTimeout(EventLoop *loop)
 
 void TcpServer::newConnection(Socket *clieSock)
 {
-    Connection *clieConnect = new Connection(&evloop_, clieSock);
-    // 存储连接客户端的channel
+    // Connection *clieConnect = new Connection(mainLoop_, clieSock);
+    // 将新建的conn分配给从事件循环
+    Connection *clieConnect = new Connection(subLoops_[clieSock->fd() % threadNum_], clieSock);
+
+    //  存储连接客户端的channel
     connects_.insert(std::make_pair(clieConnect->fd(), clieConnect));
 
     clieConnect->setClosedCallBack(std::bind(&TcpServer::closedConnection, this, std::placeholders::_1));

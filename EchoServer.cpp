@@ -1,7 +1,9 @@
 #include "EchoServer.h"
+#include <sys/syscall.h>
 
-EchoServer::EchoServer(const std::string &ip, const uint16_t port) : tcpserv_(ip, port)
+EchoServer::EchoServer(const std::string &ip, const uint16_t port, int subThreadNum, int workThreadNum) : tcpserv_(ip, port, subThreadNum), threadpool_(workThreadNum, "WORK")
 {
+    // 一下代码非必要、看业务需求
     tcpserv_.setClosedConnectCB(std::bind(&EchoServer::closedConnectHandler, this, std::placeholders::_1));
     tcpserv_.setEpollTimeoutCB(std::bind(&EchoServer::timeoutHandler, this, std::placeholders::_1));
     tcpserv_.setNewConnectCB(std::bind(&EchoServer::newConnectHandler, this, std::placeholders::_1));
@@ -19,10 +21,18 @@ void EchoServer::Start()
     tcpserv_.start();
 }
 
+void EchoServer::onMessage(Connection *conn, std::string &message)
+{
+    message = "reply:" + message;
+    int len = message.size();
+    conn->send(message.data(), message.size());
+}
+
 //
 void EchoServer::newConnectHandler(Connection *clieConnect)
 {
-    printf("new Connetion Come in\n");
+    printf("new Connetion Come in %d \n", clieConnect->fd());
+    printf("MainThread run EchoServer::newConnectHandler:pid = %lu \n", syscall(SYS_gettid));
     // 根据业务 redo
 }
 
@@ -34,7 +44,7 @@ void EchoServer::closedConnectHandler(Connection *clieConnect)
 
 void EchoServer::errorConnectHandler(Connection *clieConnect)
 {
-    printf("new Connetion Come in\n");
+    printf("new Connetion Come in %d\n", clieConnect->fd());
     // 根据业务 redo
 }
 
@@ -43,16 +53,14 @@ void EchoServer::errorConnectHandler(Connection *clieConnect)
  */
 void EchoServer::onMessageHandler(Connection *conn, std::string &message)
 {
-    message = "reply:" + message;
+    printf("WorkSThread run EchoServer::onMessagehandler:pid = %lu \n", syscall(SYS_gettid));
+    /* message = "reply:" + message;
     int len = message.size();
-    // printf("TcpServ::onmsg :message %s\n", message.data()); 由于 std::string 类型的 buf_ 对象可能包含空字符，所以在使用 printf 函数打印时，可能会出现问题，因为 printf 函数会将空字符视为字符串的结束标志。这可能导致 printf 函数只打印 buf_ 中第一个空字符之前的内容
 
-    // 创建一个临时缓冲区，用于存储消息长度
-    // std::string tmpBuf((char *)&len, 4); // 将消息长度写进tmpBuf
-    // 将实际内容添加到tmpBuf
-    // tmpBuf.append(message);
-    // 发送消息
-    conn->send(message.data(), message.size());
+    conn->send(message.data(), message.size()); */
+
+    // 把任务添加到线程池
+    threadpool_.addTask(std::bind(&EchoServer::onMessage, this, conn, message));
 }
 
 /**

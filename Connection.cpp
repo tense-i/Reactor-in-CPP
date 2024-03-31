@@ -38,7 +38,7 @@ void Connection::writeCallBack()
 {
     // 从outputBuf里将数据写入到fd
     int nwrite = ::send(fd(), outputBuf_.data(), outputBuf_.size(), 0);
-    printf("server write fd:%s \n ", outputBuf_.data());
+    // printf("server write fd:%s \n ", outputBuf_.data());
     if (nwrite > 0)
     {
         outputBuf_.eraseDate(0, nwrite);

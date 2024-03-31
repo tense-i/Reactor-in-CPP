@@ -4,13 +4,18 @@
 #include "EventLoop.h"
 #include "Socket.h"
 #include "Channel.h"
+#include "ThreadPool.h"
+
 #include <map>
 
 class Connection;
 class TcpServer
 {
 private:
-    EventLoop evloop_;                     /*一个TCPserver可以有多个事件循环、现在时单线程，暂时只用一个 事件循环*/
+    EventLoop *mainLoop_;               // 主事件2循坏
+    std::vector<EventLoop *> subLoops_; // 自事件循环集合
+    ThreadPool *threadpool_;
+    int threadNum_ = 0;
     Acceptor *acceptor_;                   /*一个TcpServer只有一个acceptor*/
     std::map<int, Connection *> connects_; /*fd-connection* */
 
@@ -22,7 +27,7 @@ private:
     std::function<void(EventLoop *)> epollTimeoutCB_;
 
 public:
-    TcpServer(const std::string &ip, uint16_t port);
+    TcpServer(const std::string &ip, uint16_t port, int threadNum = 3);
     ~TcpServer();
     void start();
     void sendComplete(Connection *conn); /*数据发送完成后、在connection类中回调此函数*/

@@ -1,4 +1,5 @@
 #include "EventLoop.h"
+#include <sys/syscall.h>
 
 EventLoop::EventLoop() : ep_(new Epoll)
 {
@@ -20,6 +21,7 @@ EventLoop::ep()
  */
 void EventLoop::run()
 {
+    printf("eventloop::run() in thread%lu\n", syscall(SYS_gettid));
     std::vector<Channel *> Channels;
 
     while (true)

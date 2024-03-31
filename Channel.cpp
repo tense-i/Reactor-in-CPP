@@ -87,48 +87,20 @@ void Channel::eventHandler()
     }
     else if (revents_ & (EPOLLIN | EPOLLPRI))
     {
-        printf("EPOLLIN\n");
+        // printf("EPOLLIN\n");
         readCallBack_();
     }
     else if (revents_ & EPOLLOUT)
     {
-        printf("EPOLLOUT\n");
+        // printf("EPOLLOUT\n");
         writeCallBack_();
     }
     else
     {
-        printf("ERROR\n");
+        // printf("ERROR\n");
         errorCallBack_();
     }
 }
-
-/* void Channel::onMessage()
-{
-    char buf[1024];
-    while (true)
-    {
-        memset(buf, 0, sizeof(buf));
-        int nread = read(fd_, buf, sizeof(buf));
-
-        if (nread > 0)
-        {
-            printf("server(event %d): %s\n", fd_, buf);
-            write(fd_, buf, nread);
-        } // 信号中断
-        else if (nread == -1 && (errno == EINTR))
-        {
-            continue;
-        } // 数据读取完毕
-        else if (nread == -1 && ((errno == EAGAIN) || (errno == EWOULDBLOCK)))
-        {
-            break;
-        }
-        else if (nread == 0) // 客户端半关闭
-        {
-            closedCallBack_();
-        }
-    }
-} */
 
 void Channel::setReadCallBack(std::function<void()> fn)
 {
