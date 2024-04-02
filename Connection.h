@@ -4,22 +4,36 @@
 #include "Channel.h"
 #include "EventLoop.h"
 #include "Buffer.h"
+#include "TimeStamp.h"
+#include <memory>
+#include <atomic>
 
-class Connection
+class Connection;
+using spConnection = std::shared_ptr<Connection>;
+
+/**
+ * @brief connection用于管理已连接fd的事件、处理channel的事件通知 Connection类采用智能指针管理、不适用普通指针来引用对象
+ */
+class Connection : public std::enable_shared_from_this<Connection>
 {
+
 private:
-    EventLoop *evloop_; // Acceptor对应的事件循环、构造函数中传入
-    Socket *clieSocket_;
-    Channel *clieChannel_;
-    Buffer inputBuf_; // 接收缓冲区
+    std::unique_ptr<EventLoop> &evloop_;   // Acceptor对应的事件循环、构造函数中传入
+    std::unique_ptr<Socket> clieSocket_;   // 用独享指针管理clieSocket_
+    std::unique_ptr<Channel> clieChannel_; // 一个服务器有很多个客户端channel、不适合放在栈区
+    Buffer inputBuf_;                      // 接收缓冲区
     Buffer outputBuf_;
-    std::function<void(Connection *)> closedCallBack_; // 关闭fd_的回调函数、将回调Tcpserver::closedconnecion
-    std::function<void(Connection *)> errorCallBack_;
-    std::function<void(Connection *, std::string &)> onMessageCallBack_; // 处理报文的回调函数、将回调TcpServer::onmessage();
-    std::function<void(Connection *)> sendCompleteCallBack_;
+    TimeStamp last_atime_; // 时间戳、创建COnnection对象时为当前时间、接受报文后更改当前时间
+
+    std::atomic_bool disconnect_;
+
+    std::function<void(spConnection)> closedCallBack_; // 关闭fd_的回调函数、将回调Tcpserver::closedconnecion
+    std::function<void(spConnection)> errorCallBack_;
+    std::function<void(spConnection, std::string &)> onMessageCallBack_; // 处理报文的回调函数、将回调TcpServer::onmessage();
+    std::function<void(spConnection)> sendCompleteCallBack_;
 
 public:
-    Connection(EventLoop *loop, Socket *clienSock);
+    Connection(std::unique_ptr<EventLoop> &loop, std::unique_ptr<Socket> clienSock);
     ~Connection();
     int fd() const;
     std::string ip() const;
@@ -29,8 +43,8 @@ public:
     void send(const char *data, size_t size);
     void errorCallBack();
     void closedCallBack();
-    void setClosedCallBack(std::function<void(Connection *)> fn);
-    void setErrorCallBack(std::function<void(Connection *)> fn);
-    void setOnMessageCallBack(std::function<void(Connection *, std::string &)> fn);
-    void setSendCompleteCallBack(std::function<void(Connection *)> fn);
+    void setClosedCallBack(std::function<void(spConnection)> fn);
+    void setErrorCallBack(std::function<void(spConnection)> fn);
+    void setOnMessageCallBack(std::function<void(spConnection, std::string &)> fn);
+    void setSendCompleteCallBack(std::function<void(spConnection)> fn);
 };

@@ -1,8 +1,7 @@
 #include "Connection.h"
 
-Connection::Connection(EventLoop *evloop, Socket *clienSock) : evloop_(evloop), clieSocket_(clienSock)
+Connection::Connection(std::unique_ptr<EventLoop> &evloop, std::unique_ptr<Socket> clienSock) : evloop_(evloop), clieSocket_(std::move(clienSock)), disconnect_(false), clieChannel_(new Channel(evloop_, clieSocket_->fd())) // uniqueptr是无法拷贝的--确保只有一份指针、要用移动语义！！
 {
-    clieChannel_ = new Channel(evloop_, clieSocket_->fd());
     clieChannel_->enableReading();
     clieChannel_->useET();
     // ep.addFd(clieSock->fd(), (EPOLLIN | EPOLLET)); // 客户端连上的fd采用边缘触发
@@ -15,8 +14,9 @@ Connection::Connection(EventLoop *evloop, Socket *clienSock) : evloop_(evloop), 
 
 Connection::~Connection()
 {
-    delete clieSocket_;
-    delete clieChannel_;
+    // unique自动释放
+    //  delete clieSocket_;
+    // delete clieChannel_;
 }
 
 int Connection::fd() const
@@ -47,7 +47,7 @@ void Connection::writeCallBack()
     if (outputBuf_.size() == 0) // 若缓冲区没有数据可写了、表示数据发送成功、不再关注写事件
     {
         clieChannel_->disableWrite();
-        sendCompleteCallBack_(this);
+        sendCompleteCallBack_(shared_from_this());
     }
 }
 
@@ -84,23 +84,17 @@ void Connection::onMessage()
                     break; // 即这个报文不完整、不直接读取到发生缓冲区、等待后续数据
                 // 执行到这、说明是一个完整报文
                 std::string message(inputBuf_.data() + 4, len);
-                inputBuf_.eraseDate(0, len + 4); // 在接受(input)删除报文
-                                                 // printf("server recv(event = %d) :%s\n", fd(), message.data());
-                //  在这经过复杂运算
-
-                /*  message = "reply:" + message;
-                 len = message.size();
-                 std::string tmpBuf((char *)&len, 4); // 将头部写进tmpBUf
-                 tmpBuf.append(message.data(), len);
-                 send(fd(), tmpBuf.data(), tmpBuf.size(), 0);
-                  */
-                onMessageCallBack_(this, message);
+                inputBuf_.eraseDate(0, len + 4);
+                last_atime_ = TimeStamp::now();
+                std::cout << "last_atime = " << last_atime_.toString() << std::endl;
+                onMessageCallBack_(shared_from_this(), message);
             };
             break;
         }
         else if (nread == 0) // 客户端半关闭
         {
             // closedCallBack_();
+            // clieChannel_->remove(); // 删除已关闭fd的channel管理器
             closedCallBack();
         }
     }
@@ -108,6 +102,11 @@ void Connection::onMessage()
 
 void Connection::send(const char *data, size_t size)
 {
+    if (disconnect_ == true)
+    {
+        printf("客户端已经断开连接、不在发送数据过去\n");
+        return;
+    }
     outputBuf_.appendWithHead(data, size); // 把需要发送的数据保存在connection的发送缓冲区中。
     // 注册写事件
     clieChannel_->enableWrite(); // 监视写事件
@@ -115,6 +114,8 @@ void Connection::send(const char *data, size_t size)
 
 void Connection::errorCallBack()
 {
+    disconnect_ = true;
+    clieChannel_->remove();
     printf("client(evnetfd = %d) error\n", fd());
     close(fd());
 }
@@ -122,25 +123,27 @@ void Connection::errorCallBack()
 void Connection::closedCallBack()
 {
     printf("client(evnetfd = %d) disconnection\n", fd());
+    clieChannel_->remove();
     close(fd());
+    disconnect_ = true;
 }
 
-void Connection::setClosedCallBack(std::function<void(Connection *)> fn)
+void Connection::setClosedCallBack(std::function<void(spConnection)> fn)
 {
     closedCallBack_ = fn;
 }
 
-void Connection::setErrorCallBack(std::function<void(Connection *)> fn)
+void Connection::setErrorCallBack(std::function<void(spConnection)> fn)
 {
     errorCallBack_ = fn;
 }
 
-void Connection::setOnMessageCallBack(std::function<void(Connection *, std::string &)> fn)
+void Connection::setOnMessageCallBack(std::function<void(spConnection, std::string &)> fn)
 {
     onMessageCallBack_ = fn;
 }
 
-void Connection::setSendCompleteCallBack(std::function<void(Connection *)> fn)
+void Connection::setSendCompleteCallBack(std::function<void(spConnection)> fn)
 {
     sendCompleteCallBack_ = fn;
 }

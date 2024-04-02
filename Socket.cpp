@@ -80,6 +80,12 @@ int Socket::accept(InetAddress &clieAddr)
     return cliefd;
 }
 
+void Socket::setInetAddr(const std::string &ip, uint16_t port)
+{
+    ip_ = ip;
+    port_ = port;
+}
+
 /**
  * @brief 创建非阻塞的监听套接字、不是Soket类的成员函数、是全局函数
  */

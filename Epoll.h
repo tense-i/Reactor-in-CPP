@@ -20,12 +20,10 @@ public:
     Epoll();
     ~Epoll();
 
+    int epfd();
+
     /* void addFd(int fd, uint32_t events); */
 
-    /**
-     * @brief 将channel添加、更新到epoll树上，channel用户管理树节点、事件触发.做了原本addFd函数的事情
-     */
-    void upDateChannel(Channel *ch);
     /**
      * @brief 运行epoll_waite事件循环、已发生的事件用vector返回
      */

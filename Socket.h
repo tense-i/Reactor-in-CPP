@@ -39,4 +39,5 @@ public:
     void bind(const InetAddress &addr);
     void listen(int queSize = 128);
     int accept(InetAddress &addr);
+    void setInetAddr(const std::string &ip, uint16_t port);
 };

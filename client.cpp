@@ -40,11 +40,6 @@ int main(int argc, char **argv)
         // tmpbuf="24"+"只是第1个超级女生"
         memcpy(tmpBuf + 4, buf, len); // 拼接报文内容
         send(sockfd, tmpBuf, len + 4, 0);
-    }
-
-    for (int i = 0; i < 1; i++)
-    {
-        int len;
 
         // 拆包
         recv(sockfd, (void *)&len, 4, 0);
@@ -81,5 +76,5 @@ int main(int argc, char **argv)
         printf("recv:%s\n", buf);
     } */
 
-    sleep(100);
+    sleep(3);
 }

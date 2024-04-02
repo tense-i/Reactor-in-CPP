@@ -47,7 +47,7 @@ void ThreadPool::addTask(std::function<void()> task)
     { // 锁的作用域
         std::lock_guard<std::mutex> lock(mutex_);
         taskQue_.push(task);
-        printf("");
+        //  printf("");
     }
     condition_.notify_one(); // 发送队列不为空信号、唤醒因为队列为空而阻塞的消费者线程
 }
