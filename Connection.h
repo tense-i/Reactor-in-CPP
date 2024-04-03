@@ -23,7 +23,7 @@ private:
     std::unique_ptr<Channel> clieChannel_; // 一个服务器有很多个客户端channel、不适合放在栈区
     Buffer inputBuf_;                      // 接收缓冲区
     Buffer outputBuf_;
-    TimeStamp last_atime_; // 时间戳、创建COnnection对象时为当前时间、接受报文后更改当前时间
+    // TimeStamp last_atime_; // 时间戳、创建COnnection对象时为当前时间、接受报文后更改当前时间
 
     std::atomic_bool disconnect_;
 

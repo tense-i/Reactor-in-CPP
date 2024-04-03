@@ -40,41 +40,50 @@ int main(int argc, char **argv)
         // tmpbuf="24"+"只是第1个超级女生"
         memcpy(tmpBuf + 4, buf, len); // 拼接报文内容
         send(sockfd, tmpBuf, len + 4, 0);
-
-        // 拆包
+    }
+    for (int i = 0; i < 1; i++)
+    { // 拆包
+        int len;
         recv(sockfd, (void *)&len, 4, 0);
         printf("client recv: len == %d \n", len);
         memset(buf, 0, sizeof(buf));
-        if (Read(sockfd, buf, len) <= 0)
+        int nread = Read(sockfd, buf, len);
+        if (nread == -1)
         {
             printf("read failed\n");
             close(sockfd);
             return -1;
         }
-        printf("recv:%s\n", buf); // 接到的数据是带着报文头的
-    }
-
-    /* while (true)
-    {
-        memset(buf, 0, sizeof(buf));
-        printf("please input: ");
-        scanf("%s", buf);
-
-        if (send(sockfd, buf, sizeof(buf), 0) <= 0)
+        if (nread == 0)
         {
-
-            printf("write failed\n");
-            return -1;
-        }
-        memset(buf, 0, sizeof(buf));
-        if (recv(sockfd, buf, sizeof(buf), 0) <= 0)
-        {
-            printf("read falied\n");
+            printf("read EOF\n");
             close(sockfd);
             return -1;
         }
-        printf("recv:%s\n", buf);
-    } */
+        printf("recv:%s\n", buf); // 接到的数据是带着报文头的}
 
-    sleep(3);
+        /* while (true)
+        {
+            memset(buf, 0, sizeof(buf));
+            printf("please input: ");
+            scanf("%s", buf);
+
+            if (send(sockfd, buf, sizeof(buf), 0) <= 0)
+            {
+
+                printf("write failed\n");
+                return -1;
+            }
+            memset(buf, 0, sizeof(buf));
+            if (recv(sockfd, buf, sizeof(buf), 0) <= 0)
+            {
+                printf("read falied\n");
+                close(sockfd);
+                return -1;
+            }
+            printf("recv:%s\n", buf);
+        } */
+    }
+    sleep(5);
+    return 0;
 }

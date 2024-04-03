@@ -23,7 +23,8 @@ public:
     int epfd();
 
     /* void addFd(int fd, uint32_t events); */
-
+    void upDateChannel(Channel *ch);
+    void removeChannel(Channel *ch);
     /**
      * @brief 运行epoll_waite事件循环、已发生的事件用vector返回
      */

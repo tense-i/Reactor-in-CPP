@@ -15,7 +15,6 @@ private:
 public:
     EventLoop();
     ~EventLoop();
-    Epoll *ep();
     void removeChannel(Channel *ch); /*从epoll的红黑树上删除该channel管理的fd*/
     void run();
     void setEpollTimeoutCallBack(std::function<void(EventLoop *)> fn);

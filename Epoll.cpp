@@ -68,7 +68,7 @@ std::vector<Channel *> Epoll::loop(int timeout)
     return channels;
 }
 
-/* void Epoll::upDateChannel(Channel *ch)
+void Epoll::upDateChannel(Channel *ch)
 {
     epoll_event ev;
     ev.data.ptr = ch;         // 为树节点指定一个绑定的channel
@@ -91,9 +91,9 @@ std::vector<Channel *> Epoll::loop(int timeout)
         }
         ch->setInepoll(); // 设置上树状态
     }
-} */
+}
 
-/* void Epoll::removeChannel(Channel *ch)
+void Epoll::removeChannel(Channel *ch)
 {
 
     if (ch->inepoll()) // 在树上----MODIFY
@@ -106,4 +106,3 @@ std::vector<Channel *> Epoll::loop(int timeout)
         }
     }
 }
- */

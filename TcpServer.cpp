@@ -86,7 +86,8 @@ void TcpServer::newConnection(std::unique_ptr<Socket> clieSock)
 
 void TcpServer::closedConnection(spConnection clieConnect)
 {
-    closedConnectionCB_(clieConnect); // 为什么要先调用EchoServer的处理业务？因为EchoServer不涉及释放内存
+    if (closedConnectionCB_)
+        closedConnectionCB_(clieConnect); // 为什么要先调用EchoServer的处理业务？因为EchoServer不涉及释放内存
 
     // printf("client(evnetfd = %d) disconnetion \n", clieConnect->fd());
     //  close(clieConnect->fd());为什么不用释放？
@@ -98,7 +99,8 @@ void TcpServer::closedConnection(spConnection clieConnect)
 void TcpServer::errorConnection(spConnection clieConnect)
 {
     // EchoServ业务
-    errorConnectionCB_(clieConnect);
+    if (errorConnectionCB_)
+        errorConnectionCB_(clieConnect);
 
     // printf("client(evnetfd = %d) error\n", clieConnect->fd());
     //  close(clieConnect->fd());
@@ -119,8 +121,9 @@ void TcpServer::onMessage(spConnection conn, std::string &message)
     // 发送消息
     conn->send(tmpBuf.data(), tmpBuf.size()); */
 
-    // EchoServ业务
-    onMessageCB_(conn, message);
+    if (onMessageCB_)
+        // EchoServ业务
+        onMessageCB_(conn, message);
 }
 
 void TcpServer::setNewConnectCB(std::function<void(spConnection)> fn)

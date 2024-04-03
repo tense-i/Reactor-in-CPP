@@ -100,7 +100,7 @@ void Channel::eventHandler()
     }
     else
     {
-        // printf("ERROR\n");
+        printf("ERROR\n");
         errorCallBack_();
         // 客户端error、注销管理器channel
         // remove();
@@ -115,7 +115,7 @@ void Channel::disableAllEvent()
 
 void Channel::remove()
 {
-    // disableAllEvent();
+    disableAllEvent();
     evloop_->removeChannel(this); // 从epoll的红黑树上删除该channel管理的fd
 }
 

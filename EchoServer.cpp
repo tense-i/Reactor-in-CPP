@@ -28,27 +28,26 @@ void EchoServer::onMessage(spConnection conn, std::string &message)
     sleep(2);
     printf("业务处理完毕、使用connect发送报文....\n");
     // 而之后要使用connect对象、若在这两秒中、客户端断开连接、此时会在TcpServer::closedConntion中释放conn对象
-    int len = message.size();
     conn->send(message.data(), message.size());
 }
 
 //
 void EchoServer::newConnectHandler(spConnection clieConnect)
 {
-    printf("new Connetion Come in %d \n", clieConnect->fd());
-    printf("MainThread run EchoServer::newConnectHandler:pid = %lu \n", syscall(SYS_gettid));
-    // 根据业务 redo
+    printf("Echoserver new Connetion Come in %d \n", clieConnect->fd());
+    // printf("MainThread run EchoServer::newConnectHandler:pid = %lu \n", syscall(SYS_gettid));
+    //  根据业务 redo
 }
 
-void EchoServer::closedConnectHandler(spConnection connclieConnect)
+void EchoServer::closedConnectHandler(spConnection clieConnect)
 {
-    printf("\n");
+    printf("Echoserver client %d  closed...\n", clieConnect->fd());
     // 根据业务 redo
 }
 
 void EchoServer::errorConnectHandler(spConnection clieConnect)
 {
-    printf("new Connetion Come in %d\n", clieConnect->fd());
+    printf("Echoserver client error %d\n", clieConnect->fd());
     // 根据业务 redo
 }
 
@@ -57,7 +56,7 @@ void EchoServer::errorConnectHandler(spConnection clieConnect)
  */
 void EchoServer::onMessageHandler(spConnection conn, std::string &message)
 {
-    printf("WorkSThread run EchoServer::onMessagehandler:pid = %lu \n", syscall(SYS_gettid));
+    // printf("WorkSThread run EchoServer::onMessagehandler:pid = %lu \n", syscall(SYS_gettid));
     /* message = "reply:" + message;
     int len = message.size();
 
