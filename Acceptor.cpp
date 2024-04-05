@@ -1,7 +1,7 @@
 #include "Acceptor.h"
 #include "Connection.h"
 
-Acceptor::Acceptor(std::unique_ptr<EventLoop> &evloop, const std::string &ip, const uint16_t port) : evloop_(evloop), servSocket_(createNonblockSocket()), acceptChannel_(evloop_, servSocket_.fd())
+Acceptor::Acceptor(EventLoop *evloop, const std::string &ip, const uint16_t port) : evloop_(evloop), servSocket_(createNonblockSocket()), acceptChannel_(evloop_, servSocket_.fd())
 {
     // servSocket_ = new Socket(createNonblockSocket()); // Socket的析构函数会关闭fd、若在栈区创建servSocket_离开构造函数便会析构
     servSocket_.setKeepAlive(true);

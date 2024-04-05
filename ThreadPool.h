@@ -20,5 +20,6 @@ private:
 public:
     ThreadPool(size_t threadNum, const std::string &type);
     void addTask(std::function<void()> task);
+    size_t size();
     ~ThreadPool();
 };

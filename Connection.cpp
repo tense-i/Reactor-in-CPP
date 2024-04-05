@@ -1,6 +1,6 @@
 #include "Connection.h"
 
-Connection::Connection(std::unique_ptr<EventLoop> &evloop, std::unique_ptr<Socket> clienSock) : evloop_(evloop), clieSocket_(std::move(clienSock)), disconnect_(false), clieChannel_(new Channel(evloop_, clieSocket_->fd())) // uniqueptr是无法拷贝的--确保只有一份指针、要用移动语义！！
+Connection::Connection(EventLoop *evloop, std::unique_ptr<Socket> clienSock) : evloop_(evloop), clieSocket_(std::move(clienSock)), disconnect_(false), clieChannel_(new Channel(evloop_, clieSocket_->fd())) // uniqueptr是无法拷贝的--确保只有一份指针、要用移动语义！！
 {
 
     // ep.addFd(clieSock->fd(), (EPOLLIN | EPOLLET)); // 客户端连上的fd采用边缘触发
@@ -112,9 +112,26 @@ void Connection::send(const char *data, size_t size)
         printf("客户端已经断开连接、不在发送数据过去\n");
         return;
     }
+    printf("Cconnectin::send %s\n", data);
+
+    if (evloop_->isInLoopthread())
+    {
+        // 如果当前线程是IO线程、直接执行发送的操作
+        sendInLoop(data, size);
+    }
+    else
+    { // 如果当前线程不是IO线程、把数据的操作交给IO线程--为什么？保证对数据的操作都是IO线程、工作线程不涉及IO操作
+        evloop_->pushInloop(std::bind(&Connection::sendInLoop, this, data, size));
+    }
+}
+
+void Connection::sendInLoop(const char *data, size_t size)
+{
     outputBuf_.appendWithHead(data, size); // 把需要发送的数据保存在connection的发送缓冲区中。
     // 注册写事件
     clieChannel_->enableWrite(); // 监视写事件
+
+    std::cout << data << std::endl;
 }
 
 void Connection::errorCallBack()

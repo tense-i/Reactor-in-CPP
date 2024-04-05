@@ -15,6 +15,7 @@ int main(int argc, char **argv)
     {
         printf("error\n");
         printf("example:./client 192.168.150.128 5085\n");
+        exit(-1);
     }
     int sockfd;
     struct sockaddr_in servAddr;
@@ -29,7 +30,7 @@ int main(int argc, char **argv)
     Connect(sockfd, (sockaddr *)&servAddr, sizeof(servAddr));
 
     printf("connect ok \n");
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 5; i++)
     {
         memset(buf, 0, sizeof(buf));
         snprintf(buf, sizeof(buf), "这是第%d个超级女生", i);
@@ -41,7 +42,8 @@ int main(int argc, char **argv)
         memcpy(tmpBuf + 4, buf, len); // 拼接报文内容
         send(sockfd, tmpBuf, len + 4, 0);
     }
-    for (int i = 0; i < 1; i++)
+
+    for (int i = 0; i < 5; i++)
     { // 拆包
         int len;
         recv(sockfd, (void *)&len, 4, 0);
@@ -73,7 +75,7 @@ int main(int argc, char **argv)
 
                 printf("write failed\n");
                 return -1;
-            }
+            }t
             memset(buf, 0, sizeof(buf));
             if (recv(sockfd, buf, sizeof(buf), 0) <= 0)
             {

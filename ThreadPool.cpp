@@ -52,6 +52,11 @@ void ThreadPool::addTask(std::function<void()> task)
     condition_.notify_one(); // 发送队列不为空信号、唤醒因为队列为空而阻塞的消费者线程
 }
 
+size_t ThreadPool::size()
+{
+    return threads_.size();
+}
+
 ThreadPool::~ThreadPool()
 {
     stop_ = true;

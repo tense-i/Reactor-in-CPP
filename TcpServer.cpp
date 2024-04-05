@@ -3,7 +3,7 @@
 #include <functional>
 #include <utility>
 
-TcpServer::TcpServer(const std::string &ip, uint16_t port, int threadNum) : threadNum_(threadNum), mainLoop_(new EventLoop), acceptor_(mainLoop_, ip, port), threadpool_(threadNum_, "IO")
+TcpServer::TcpServer(const std::string &ip, uint16_t port, int threadNum) : threadNum_(threadNum), mainLoop_(new EventLoop), acceptor_(mainLoop_.get(), ip, port), threadpool_(threadNum_, "IO")
 {
     // mainLoop_ = new EventLoop;
     // acceptor_ = new Acceptor(mainLoop_, ip, port);
@@ -68,7 +68,7 @@ void TcpServer::newConnection(std::unique_ptr<Socket> clieSock)
 {
     // spConnection clieConnect = new Connection(mainLoop_, clieSock);
     // 将新建的conn分配给从事件循环
-    spConnection clieConnect(new Connection(subLoops_[clieSock->fd() % threadNum_], std::move(clieSock)));
+    spConnection clieConnect(new Connection(subLoops_[clieSock->fd() % threadNum_].get(), std::move(clieSock)));
 
     //  存储连接客户端的channel
     connects_.insert(std::make_pair(clieConnect->fd(), clieConnect));

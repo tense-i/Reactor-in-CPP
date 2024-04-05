@@ -18,7 +18,7 @@ class Connection : public std::enable_shared_from_this<Connection>
 {
 
 private:
-    std::unique_ptr<EventLoop> &evloop_;   // Acceptor对应的事件循环、构造函数中传入
+    EventLoop *evloop_;                    // Acceptor对应的事件循环、构造函数中传入
     std::unique_ptr<Socket> clieSocket_;   // 用独享指针管理clieSocket_
     std::unique_ptr<Channel> clieChannel_; // 一个服务器有很多个客户端channel、不适合放在栈区
     Buffer inputBuf_;                      // 接收缓冲区
@@ -33,14 +33,21 @@ private:
     std::function<void(spConnection)> sendCompleteCallBack_;
 
 public:
-    Connection(std::unique_ptr<EventLoop> &loop, std::unique_ptr<Socket> clienSock);
+    Connection(EventLoop *loop, std::unique_ptr<Socket> clienSock);
     ~Connection();
     int fd() const;
     std::string ip() const;
     uint16_t port() const;
     void writeCallBack(); // 处理写事件、被channel回调
     void onMessage();     /*接受报文*/
+    /**
+     * @brief 发送数据、不管在任何线程中、都是调用此函数发送数据
+     */
     void send(const char *data, size_t size);
+    /**
+     * @brief 发送数据、如果当前线程是IO线程、直接调用该函数、如果是工作线程、将此函数传递给IO线程去执行
+     */
+    void sendInLoop(const char *data, size_t size);
     void errorCallBack();
     void closedCallBack();
     void setClosedCallBack(std::function<void(spConnection)> fn);

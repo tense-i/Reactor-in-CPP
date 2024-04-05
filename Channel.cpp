@@ -2,7 +2,7 @@
 #include "InetAddress.h"
 #include "Connection.h"
 
-Channel::Channel(std::unique_ptr<EventLoop> &evloop, int fd) : evloop_(evloop), fd_(fd)
+Channel::Channel(EventLoop *evloop, int fd) : evloop_(evloop), fd_(fd)
 {
 }
 
